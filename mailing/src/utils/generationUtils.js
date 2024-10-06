@@ -1,37 +1,12 @@
-import fs from "fs";
-import path from "path";
-import sanitizeHtml from "sanitize-html";
+const fs = require("fs");
+const path = require("path");
+const sanitizeHtml = require("sanitize-html");
 
-interface SubZone {
-  id?: number;
-  dndId?: string;
-  order: number;
-  moduleType: string;
-  content: string;
-  width?: string;
-  links?: string[];
-  zoneId?: number;
-}
-
-interface TemplateZone {
-  id?: number;
-  order: number;
-  subZones: SubZone[];
-  templateId?: number;
-  dndId?: string;
-}
-
-const isValidText = (content: string): boolean => {
+const isValidText = (content) => {
   return typeof content === "string" && content.trim() !== "";
 };
 
-// const validateURL = (url: string): boolean => {
-//   const urlPattern = /^(https:\/\/)[\w.-]+\.[a-zA-Z]{2,}$/;
-//   console.log(urlPattern);
-//   return urlPattern.test(url);
-// };
-
-const validateURL = (url: string): boolean => {
+const validateURL = (url) => {
   try {
     new URL(url);
     return true;
@@ -40,11 +15,7 @@ const validateURL = (url: string): boolean => {
   }
 };
 
-// const isValidUrl = (content: string[]): boolean => {
-//   return content.every((url) => validateURL(url));
-// };
-
-const escapeHtml = (unsafe: string): string => {
+const escapeHtml = (unsafe) => {
   return unsafe
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -53,50 +24,19 @@ const escapeHtml = (unsafe: string): string => {
     .replace(/'/g, "&#039;");
 };
 
-// NOUVELLE VERSION AVEC LE TEXTE CUSTOMIZE
-const createTextElement = (content: string): string => {
+const createTextElement = (content) => {
   return `<div style="margin: 0; word-wrap: break-word; max-width: 100%;">${content}</div>`;
 };
 
-const createImageElement = (src: string): string => {
+const createImageElement = (src) => {
   const sanitizedSrc = escapeHtml(src);
   return `<img src="${sanitizedSrc}" alt="Image" style="max-width: 100%; height: auto; display: block;" />`;
 };
 
-// const createLinkElement = (content: string, links: string[]): string => {
-//   const userSocialMedias = content.split(",").map((item) => item.trim());
-//   return userSocialMedias
-//     .map((socialMedia, index) => {
-//       // ajouter lien user ici pour créer une icone et un lien
-//       let iconSrc = "";
-//       switch (socialMedia.toLowerCase()) {
-//         case "facebook":
-//           iconSrc =
-//             "https://res.cloudinary.com/dyhn66mah/image/upload/v1720706135/Mailcraft/hdhhisfe0vwc8qg5rcb4.png";
-//           break;
-//         case "twitter":
-//           iconSrc =
-//             "https://res.cloudinary.com/dyhn66mah/image/upload/v1720706136/Mailcraft/i05pdxve7ld58salwefj.png";
-//           break;
-//         case "linkedin":
-//           iconSrc =
-//             "https://res.cloudinary.com/dyhn66mah/image/upload/v1720706137/Mailcraft/kppjcg5nrk2pwwpfktpe.png";
-//           break;
-//         default:
-//           iconSrc = "";
-//       }
-//       const sanitizedLink = escapeHtml(links[index] || "");
-//       return iconSrc
-//         ? `<a href="${sanitizedLink}" target="_blank" rel="noopener noreferrer"><img src="${iconSrc}" alt="${socialMedia}" style="width: 24px; height: 24px; margin-right: 10px; display: inline-block;" /></a>`
-//         : `<a href="${sanitizedLink}" target="_blank" rel="noopener noreferrer" style="display: inline-block;">${sanitizedLink}</a>`;
-//     })
-//     .join(" ");
-// };
-
-const createLinkElement = (userLinks: any) => {
+const createLinkElement = (userLinks) => {
   let html = "";
 
-  userLinks.forEach((linkObject: any) => {
+  userLinks.forEach((linkObject) => {
     Object.entries(linkObject).forEach(([key, value]) => {
       if (typeof value !== "string" || !value || !validateURL(value)) return;
       let iconSrc = "";
@@ -128,10 +68,10 @@ const createLinkElement = (userLinks: any) => {
   return html;
 };
 
-const updateHtmlFile = (newHtml: string, file: string): Promise<void> => {
+const updateHtmlFile = (newHtml, file) => {
   const filePath = path.resolve(__dirname, `../${file}`);
   return new Promise((resolve, reject) => {
-    fs.writeFile(filePath, newHtml, "utf-8", (err: any) => {
+    fs.writeFile(filePath, newHtml, "utf-8", (err) => {
       if (err) {
         console.error("Error writing file:", err);
         reject(err);
@@ -143,10 +83,7 @@ const updateHtmlFile = (newHtml: string, file: string): Promise<void> => {
   });
 };
 
-export const convertTemplateToHtmlInline = async (
-  templateZones: TemplateZone[],
-  userLinks: any[]
-): Promise<string> => {
+const convertTemplateToHtmlInline = async (templateZones, userLinks) => {
   let templateHtml = `
     <!DOCTYPE html>
     <html>
@@ -202,4 +139,8 @@ export const convertTemplateToHtmlInline = async (
 
   await updateHtmlFile(sanitizedHtml, "templateInline.html");
   return sanitizedHtml;
+};
+
+module.exports = {
+  convertTemplateToHtmlInline,
 };
