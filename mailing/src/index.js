@@ -1,11 +1,11 @@
-import express, { Request, response, Response } from "express";
-import * as dotenv from "dotenv";
-import cors from "cors";
-import path from "path";
-import { convertTemplateToHtmlInline } from "./utils/generationUtils";
-import fs from "fs";
-import nodemailer from "nodemailer";
-import jwt from "jsonwebtoken";
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const path = require("path");
+const { convertTemplateToHtmlInline } = require("./utils/generationUtils");
+const fs = require("fs");
+const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
 
 dotenv.config();
 
@@ -25,31 +25,27 @@ app.use(cors(corsOptions));
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 /////////////////////////////////////////////////////////////////////////
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (req, res) => {
   res.send("server running");
 });
 
-// endpoint pour obtenir le html pour les mails envoyés depuis la plateforme
-app.post(
-  "/convertTemplateToHtmlInline",
-  async (req: Request, res: Response) => {
-    // envoyer également les user.links pour faire correspondance
-    const { templateZones, userLinks } = req.body;
-    console.log(JSON.stringify(templateZones, null, 2));
-    try {
-      const htmlTemplate = await convertTemplateToHtmlInline(
-        templateZones,
-        userLinks
-      );
-      res.status(200).json({ html: htmlTemplate });
-    } catch (error: any) {
-      console.error("Error during HTML conversion:", error);
-      res.status(500).json({
-        error: `Failed to convert template to HTML: ${error.message}`,
-      });
-    }
+// endpoint to get the html for emails sent from the platform
+app.post("/convertTemplateToHtmlInline", async (req, res) => {
+  const { templateZones, userLinks } = req.body;
+  console.log(JSON.stringify(templateZones, null, 2));
+  try {
+    const htmlTemplate = await convertTemplateToHtmlInline(
+      templateZones,
+      userLinks
+    );
+    res.status(200).json({ html: htmlTemplate });
+  } catch (error) {
+    console.error("Error during HTML conversion:", error);
+    res.status(500).json({
+      error: `Failed to convert template to HTML: ${error.message}`,
+    });
   }
-);
+});
 
 app.get("/preview", (req, res) => {
   const filePath = path.join(__dirname, "templateInline.html");
@@ -71,7 +67,7 @@ app.get("/preview", (req, res) => {
   });
 });
 
-app.post("/downloadHtmlTemplate", async (req: Request, res: Response) => {
+app.post("/downloadHtmlTemplate", async (req, res) => {
   const { htmlTemplate, templateTitle } = req.body;
 
   if (!templateTitle) {
@@ -83,22 +79,19 @@ app.post("/downloadHtmlTemplate", async (req: Request, res: Response) => {
   const filePath = path.join(__dirname, fileName);
 
   try {
-    // Crée un fichier temporaire avec le html
     await fs.promises.writeFile(filePath, htmlTemplate);
 
-    // On le télécharge pour le user
     res.download(filePath, fileName, (err) => {
       if (err) {
         console.error("Error sending file:", err);
         res.status(500).json({ error: "Failed to send file" });
       } else {
-        // On supprime ce fichier temporaire
         fs.promises.unlink(filePath).catch((error) => {
           console.error("Error deleting file:", error);
         });
       }
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error during HTML conversion:", error);
     res
       .status(500)
@@ -113,24 +106,22 @@ const transporter = nodemailer.createTransport({
     pass: process.env.MAILCRAFT_GMAIL_PASSWORD,
   },
 });
-// sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-app.post("/sendMail", async (req: Request, res: Response) => {
+app.post("/sendMail", async (req, res) => {
   const { userMail, recipient, subject, htmlContent } = req.body;
 
-  const textContent = htmlContent.replace(/<[^>]+>/g, ""); // convertir le HTML en texte brut
+  const textContent = htmlContent.replace(/<[^>]+>/g, ""); // convert HTML to plain text
   console.log(textContent);
 
   const mailData = {
     from: userMail,
     to: recipient,
     subject: subject,
-    html: htmlContent, // version HTML
+    html: htmlContent, // HTML version
   };
 
   try {
     await transporter.sendMail(mailData);
-    // await sgMail.send(msg);
     res.status(200).json({ message: "Email sent successfully" });
   } catch (error) {
     console.error("Error sending email:", error);
@@ -142,7 +133,7 @@ const resetPasswordURL =
   process.env.RESET_PASSWORD_URL || "localhost:3000/resetPassword";
 const jwtSecret = process.env.JWT_SECRET_KEY || "temporary_reset_key";
 
-app.post("/generateResetPasswordLink", async (req: Request, res: Response) => {
+app.post("/generateResetPasswordLink", async (req, res) => {
   const { recipient } = req.body;
 
   if (!recipient) {
