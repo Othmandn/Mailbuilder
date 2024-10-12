@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon src/index.js"
+    "start": "node dist/index.js",
+    "dev": "nodemon src/index.js",
+    "build": "babel src -d dist"
   },
   "keywords": [],
   "author": "",
@@ -17,8 +19,13 @@
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.15",
-    "nodemon": "^3.1.7",
     "path": "^0.12.7",
     "sanitize-html": "^2.13.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.x",
+    "@babel/core": "^7.x",
+    "@babel/preset-env": "^7.x",
+    "nodemon": "^3.1.7"
   }
 }

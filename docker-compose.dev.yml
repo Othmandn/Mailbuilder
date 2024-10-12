@@ -1,0 +1,77 @@
+version: '3.7'
+
+services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "4000:3001"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/.env:/app/.env
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - .env
+    depends_on:
+      - db
+    command: npm run dev
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/.env.local:/app/.env.local
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - .env
+    command: npm run dev
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  image:
+    build: 
+      context: ./image
+      dockerfile: Dockerfile.dev
+    env_file:
+      - .env
+    volumes:
+      - ./image/src:/app/src
+    ports:
+      - "5000:5000"
+    command: npm run dev
+
+  mailing:
+    build: 
+      context: ./mailing
+      dockerfile: Dockerfile.dev
+    env_file:
+      - .env
+    volumes:
+      - ./mailing/src:/app/src
+    ports:
+      - "5050:5050"
+    command: npm run dev
+
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data_dev:
